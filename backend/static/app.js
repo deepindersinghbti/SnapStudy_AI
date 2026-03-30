@@ -7,6 +7,11 @@ const logoutBtn = document.getElementById("logout-btn");
 const uploadsList = document.getElementById("uploads-list");
 const statusLog = document.getElementById("status-log");
 const authStatus = document.getElementById("auth-status");
+const showLoginBtn = document.getElementById("show-login");
+const showRegisterBtn = document.getElementById("show-register");
+const loginPanel = document.getElementById("login-panel");
+const registerPanel = document.getElementById("register-panel");
+const authMessage = document.getElementById("auth-message");
 
 const TOKEN_KEY = "snapstudy_token";
 
@@ -33,6 +38,26 @@ function setLoading(button, loadingText, isLoading) {
   }
   button.disabled = isLoading;
   button.textContent = isLoading ? loadingText : button.dataset.defaultText;
+}
+
+function showAuthMessage(message) {
+  authMessage.textContent = message;
+  authMessage.classList.add("show");
+}
+
+function clearAuthMessage() {
+  authMessage.textContent = "";
+  authMessage.classList.remove("show");
+}
+
+function setAuthMode(mode) {
+  const isLogin = mode === "login";
+  loginPanel.classList.toggle("hidden", !isLogin);
+  registerPanel.classList.toggle("hidden", isLogin);
+  showLoginBtn.classList.toggle("active", isLogin);
+  showRegisterBtn.classList.toggle("active", !isLogin);
+  showLoginBtn.setAttribute("aria-selected", String(isLogin));
+  showRegisterBtn.setAttribute("aria-selected", String(!isLogin));
 }
 
 function updateAuthUi() {
@@ -68,8 +93,12 @@ registerForm.addEventListener("submit", async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
+    registerForm.reset();
+    showAuthMessage("Registration successful! You can now log in.");
+    setAuthMode("login");
     log(`Registered user: ${email}`);
   } catch (error) {
+    clearAuthMessage();
     log(`Register failed: ${error.message}`);
   } finally {
     setLoading(submitBtn, "", false);
@@ -91,6 +120,8 @@ loginForm.addEventListener("submit", async (event) => {
     });
     setToken(data.access_token);
     updateAuthUi();
+    loginForm.reset();
+    clearAuthMessage();
     log("Login successful. Token saved in browser.");
     await loadUploads();
   } catch (error) {
@@ -146,6 +177,16 @@ logoutBtn.addEventListener("click", () => {
   log("Logged out and token removed.");
 });
 
+showLoginBtn.addEventListener("click", () => {
+  clearAuthMessage();
+  setAuthMode("login");
+});
+
+showRegisterBtn.addEventListener("click", () => {
+  clearAuthMessage();
+  setAuthMode("register");
+});
+
 async function loadUploads() {
   const token = getToken();
   if (!token) {
@@ -179,6 +220,7 @@ async function loadUploads() {
 }
 
 updateAuthUi();
+setAuthMode("login");
 if (getToken()) {
   loadUploads().catch((err) => log(`Initial load failed: ${err.message}`));
 }
