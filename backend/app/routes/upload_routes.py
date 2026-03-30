@@ -3,13 +3,20 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.ai_service import generate_explanation
+from app.ai_service import generate_explanation, generate_follow_up_response
 from app.auth import get_current_user
 from app.config import get_settings
 from app.db import get_db
-from app.models import Upload, User
+from app.models import Conversation, ConversationMessage, Upload, User
 from app.ocr_service import extract_text_from_file
-from app.schemas import UploadCreateResponse, UploadRead
+from app.schemas import (
+    FollowUpCreateRequest,
+    FollowUpCreateResponse,
+    FollowUpHistoryResponse,
+    FollowUpMessageRead,
+    UploadCreateResponse,
+    UploadRead,
+)
 from app.utils.file_utils import (
     allowed_extension,
     allowed_mime_type,
@@ -19,6 +26,17 @@ from app.utils.file_utils import (
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 settings = get_settings()
+
+
+def _get_owned_upload(db: Session, upload_id: int, user_id: int) -> Upload:
+    upload = (
+        db.query(Upload)
+        .filter(Upload.id == upload_id, Upload.user_id == user_id)
+        .first()
+    )
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    return upload
 
 
 @router.post("", response_model=UploadCreateResponse, status_code=status.HTTP_201_CREATED)
@@ -99,3 +117,106 @@ def list_uploads(
         )
         for row in records
     ]
+
+
+@router.get("/{upload_id}/followups", response_model=FollowUpHistoryResponse)
+def list_followups(
+    upload_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FollowUpHistoryResponse:
+    _get_owned_upload(db, upload_id, current_user.id)
+
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.upload_id == upload_id,
+            Conversation.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not conversation:
+        return FollowUpHistoryResponse(conversation_id=None, messages=[])
+
+    messages = (
+        db.query(ConversationMessage)
+        .filter(ConversationMessage.conversation_id == conversation.id)
+        .order_by(ConversationMessage.created_at.asc(), ConversationMessage.id.asc())
+        .all()
+    )
+
+    return FollowUpHistoryResponse(
+        conversation_id=conversation.id,
+        messages=[
+            FollowUpMessageRead(
+                id=row.id,
+                question=row.user_message,
+                response=row.ai_response,
+                created_at=row.created_at,
+            )
+            for row in messages
+        ],
+    )
+
+
+@router.post("/{upload_id}/followups", response_model=FollowUpCreateResponse)
+def create_followup(
+    upload_id: int,
+    payload: FollowUpCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FollowUpCreateResponse:
+    upload = _get_owned_upload(db, upload_id, current_user.id)
+
+    question = payload.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.upload_id == upload.id,
+            Conversation.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not conversation:
+        conversation = Conversation(
+            upload_id=upload.id, user_id=current_user.id)
+        db.add(conversation)
+        db.flush()
+
+    prior_messages = (
+        db.query(ConversationMessage)
+        .filter(ConversationMessage.conversation_id == conversation.id)
+        .order_by(ConversationMessage.created_at.asc(), ConversationMessage.id.asc())
+        .all()
+    )
+    history = [
+        {"question": row.user_message, "response": row.ai_response}
+        for row in prior_messages
+    ]
+
+    ai_response = generate_follow_up_response(
+        extracted_text=upload.extracted_text,
+        explanation=upload.explanation,
+        question=question,
+        history=history,
+    )
+
+    message = ConversationMessage(
+        conversation_id=conversation.id,
+        user_message=question,
+        ai_response=ai_response,
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return FollowUpCreateResponse(
+        conversation_id=conversation.id,
+        message_id=message.id,
+        question=message.user_message,
+        response=message.ai_response,
+        created_at=message.created_at,
+    )

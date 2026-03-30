@@ -55,3 +55,27 @@ class QuizScoreResponse(BaseModel):
     score: float
     total_questions: int
     correct_answers: int
+
+
+class FollowUpCreateRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+
+
+class FollowUpMessageRead(BaseModel):
+    id: int
+    question: str
+    response: str
+    created_at: datetime
+
+
+class FollowUpCreateResponse(BaseModel):
+    conversation_id: int
+    message_id: int
+    question: str
+    response: str
+    created_at: datetime
+
+
+class FollowUpHistoryResponse(BaseModel):
+    conversation_id: int | None = None
+    messages: list[FollowUpMessageRead] = Field(default_factory=list)
