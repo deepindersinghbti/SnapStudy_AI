@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapStudy UI</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="bg-shape bg-shape-a"></div>
+  <div class="bg-shape bg-shape-b"></div>
+
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">SnapStudy</p>
+      <h1>Upload Notes, Get Clear Explanations</h1>
+      <p class="sub">Register, login, upload an image or PDF, and view OCR + AI explanation instantly.</p>
+    </header>
+
+    <section class="card grid-two">
+      <div>
+        <h2>Register</h2>
+        <form id="register-form" class="stack">
+          <label>Email
+            <input type="email" id="register-email" placeholder="test@example.com" required>
+          </label>
+          <label>Password
+            <input type="password" id="register-password" minlength="6" required>
+          </label>
+          <button type="submit">Create Account</button>
+        </form>
+      </div>
+
+      <div>
+        <h2>Login</h2>
+        <form id="login-form" class="stack">
+          <label>Email
+            <input type="email" id="login-email" placeholder="test@example.com" required>
+          </label>
+          <label>Password
+            <input type="password" id="login-password" minlength="6" required>
+          </label>
+          <button type="submit">Get Access Token</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row-between">
+        <h2>Upload File</h2>
+        <span id="auth-status" class="pill">Not logged in</span>
+      </div>
+
+      <form id="upload-form" class="stack">
+        <label>Select image/PDF
+          <input type="file" id="upload-file" accept=".png,.jpg,.jpeg,.pdf" required>
+        </label>
+        <button type="submit" id="upload-btn" disabled>Upload and Process</button>
+      </form>
+
+      <div class="actions">
+        <button id="refresh-btn" disabled>Refresh Uploads</button>
+        <button id="logout-btn" class="secondary" disabled>Logout</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Uploads</h2>
+      <div id="uploads-list" class="stack"></div>
+    </section>
+
+    <section class="card">
+      <h2>Status Log</h2>
+      <pre id="status-log" class="log"></pre>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

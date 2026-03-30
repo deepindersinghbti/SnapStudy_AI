@@ -1,0 +1,11 @@
+backend/.env
+backend/.venv/
+backend/snapstudy.db
+backend/uploads/
+
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/**/*.pyd
+
+.vscode/
