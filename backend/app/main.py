@@ -6,9 +6,10 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.db import Base, engine
-from app.routes.auth_routes import router as auth_router
+from app.routes.auth import router as auth_router
+from app.routes.pages import router as pages_router
 from app.routes.quiz_routes import router as quiz_router
-from app.routes.upload_routes import router as upload_router
+from app.routes.uploads import router as upload_router
 from app.schemas import HealthResponse
 from app.utils.file_utils import ensure_upload_dir
 
@@ -41,8 +42,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/ui", StaticFiles(directory="static", html=True), name="ui")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.include_router(pages_router)
 app.include_router(auth_router)
 app.include_router(upload_router)
 app.include_router(quiz_router, prefix=settings.api_v1_prefix)

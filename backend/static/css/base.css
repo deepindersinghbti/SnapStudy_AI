@@ -1,0 +1,260 @@
+:root {
+    --bg: #f5f0e6;
+    --ink: #1f1d1a;
+    --accent: #0f766e;
+    --accent-2: #d97706;
+    --card: #fffaf0;
+    --border: #d7c8ab;
+    --ok: #065f46;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at 20% 10%, #fff3c4 0%, var(--bg) 35%, #e7dcc7 100%);
+    min-height: 100vh;
+}
+
+a {
+    color: #0f766e;
+}
+
+.bg-shape {
+    position: fixed;
+    border-radius: 999px;
+    filter: blur(50px);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.bg-shape-a {
+    width: 260px;
+    height: 260px;
+    background: #22c55e;
+    top: -60px;
+    right: -40px;
+}
+
+.bg-shape-b {
+    width: 320px;
+    height: 320px;
+    background: #f59e0b;
+    bottom: -120px;
+    left: -40px;
+}
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(6px);
+    background: rgba(255, 250, 240, 0.84);
+    border-bottom: 1px solid #e6d8bd;
+}
+
+.site-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand {
+    font-weight: 800;
+    text-decoration: none;
+    color: #115e59;
+}
+
+.site-nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.site-nav a {
+    text-decoration: none;
+    color: #334155;
+    font-weight: 600;
+}
+
+.page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    position: relative;
+}
+
+.card {
+    margin-top: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 10px 25px rgba(16, 24, 40, 0.08);
+}
+
+.hero h1,
+.hero-landing h1,
+.auth-card h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.6rem, 2.4vw, 2.3rem);
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.sub {
+    margin: 0;
+    color: #4b5563;
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+input,
+button {
+    font: inherit;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="file"],
+input[type="text"] {
+    border: 1px solid #c9b99d;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+}
+
+button,
+.btn-link {
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, var(--accent), #0ea5a4);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button.secondary,
+.btn-link.secondary {
+    background: linear-gradient(90deg, var(--accent-2), #f59e0b);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.inline-note {
+    margin: 8px 0 0;
+}
+
+.narrow {
+    max-width: 540px;
+    margin-inline: auto;
+}
+
+.features h2,
+.cta h2 {
+    margin-top: 0;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.feature-item {
+    border: 1px solid #e6d8bd;
+    background: #fffef8;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+@media (min-width: 820px) {
+    .feature-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.toast-root {
+    position: fixed;
+    right: 14px;
+    top: 70px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast {
+    min-width: 220px;
+    max-width: 360px;
+    border-radius: 10px;
+    border: 1px solid #d6c7aa;
+    background: #fffaf1;
+    color: #1f2937;
+    padding: 10px 12px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    border-color: #86efac;
+    background: #dcfce7;
+    color: #065f46;
+}
+
+.toast.error {
+    border-color: #fca5a5;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.hidden {
+    display: none;
+}

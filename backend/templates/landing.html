@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}SnapStudy | Learn Faster{% endblock %}
+
+{% block content %}
+<section class="hero hero-landing card">
+    <p class="eyebrow">SnapStudy</p>
+    <h1>Turn Notes Into Clear Explanations In Seconds</h1>
+    <p class="sub">Upload study notes, run OCR, and get AI-powered explanations to understand material faster.</p>
+    <div class="actions">
+        <a class="btn-link" href="/login">Login</a>
+        <a class="btn-link secondary" href="/register">Sign Up</a>
+    </div>
+</section>
+
+<section class="card features">
+    <h2>Why SnapStudy</h2>
+    <div class="feature-grid">
+        <article class="feature-item">
+            <h3>Smart OCR</h3>
+            <p>Extract text from handwritten or typed notes in images and PDFs.</p>
+        </article>
+        <article class="feature-item">
+            <h3>AI Explanations</h3>
+            <p>Get concise, readable explanations generated from your uploaded content.</p>
+        </article>
+        <article class="feature-item">
+            <h3>Learning History</h3>
+            <p>Review previous uploads and revisit explanations anytime from your dashboard.</p>
+        </article>
+    </div>
+</section>
+
+<section class="card cta">
+    <h2>Ready to study smarter?</h2>
+    <p>Create your account and start with your first upload.</p>
+    <div class="actions">
+        <a class="btn-link" href="/register">Create Account</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}SnapStudy | Register{% endblock %}
+
+{% block content %}
+<section class="card auth-card narrow">
+    <h1>Sign Up</h1>
+    <p class="sub">Create your account to start uploading notes.</p>
+
+    <form id="register-form" class="stack">
+        <label>Email
+            <input type="email" id="register-email" placeholder="test@example.com" required>
+        </label>
+        <label>Password
+            <input type="password" id="register-password" minlength="6" required>
+        </label>
+        <label>Confirm Password
+            <input type="password" id="register-confirm-password" minlength="6" required>
+        </label>
+        <button type="submit" id="register-btn">Register</button>
+    </form>
+
+    <p class="inline-note">Already have an account? <a href="/login">Login here</a>.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/register.js') }}"></script>
+{% endblock %}

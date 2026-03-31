@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}SnapStudy | Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section id="dashboard-gate" class="card gate-message">
+    <h1>Validating session...</h1>
+    <p class="sub">Please wait while we verify your login.</p>
+</section>
+
+<div id="dashboard-content" class="hidden">
+    <section class="card">
+        <div class="row-between">
+            <h1>Dashboard</h1>
+            <span id="auth-status" class="pill">Checking session</span>
+        </div>
+        <p class="sub">Upload files, review OCR output, and read AI explanations.</p>
+    </section>
+
+    <section class="card dashboard-grid">
+        <article class="dash-column">
+            <h2>Upload</h2>
+            <form id="upload-form" class="stack">
+                <label>Select image/PDF
+                    <input type="file" id="upload-file" accept="image/*,.pdf,application/pdf" required>
+                </label>
+                <button type="submit" id="upload-btn">Upload and Process</button>
+            </form>
+            <div class="actions">
+                <button id="refresh-btn" type="button">Refresh Uploads</button>
+                <button id="logout-btn" type="button" class="secondary">Logout</button>
+            </div>
+        </article>
+
+        <article class="dash-column">
+            <h2>Status Log</h2>
+            <pre id="status-log" class="log"></pre>
+        </article>
+    </section>
+
+    <section class="card">
+        <h2>Upload History</h2>
+        <div id="uploads-list" class="stack"></div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/dashboard.js') }}"></script>
+{% endblock %}
