@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SnapStudy — Upload study notes, run OCR, and get AI-powered explanations.">
     <title>{% block title %}SnapStudy{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}">
     {% block head %}{% endblock %}
 </head>
@@ -15,7 +19,7 @@
 
     <header class="site-header">
         <div class="site-shell">
-            <a class="brand" href="/">SnapStudy</a>
+            <a class="brand" href="/">⚡ SnapStudy</a>
             <nav class="site-nav">
                 <a href="/">Home</a>
                 <a href="/login">Login</a>
