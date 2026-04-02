@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -8,7 +9,11 @@ from app.auth import get_current_user
 from app.config import get_settings
 from app.db import get_db
 from app.models import Conversation, ConversationMessage, Upload, User
-from app.ocr_service import extract_text_from_file
+from app.ocr_service import (
+    ExtractionErrorCode,
+    ExtractionResult,
+    extract_text_from_file,
+)
 from app.schemas import (
     FollowUpCreateRequest,
     FollowUpCreateResponse,
@@ -26,6 +31,74 @@ from app.utils.file_utils import (
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 settings = get_settings()
+logger = logging.getLogger(__name__)
+
+
+def _message_for_extraction_error(error_code: str | None, file_type: str) -> str:
+    if error_code == ExtractionErrorCode.DEPENDENCY_MISSING:
+        return (
+            "Document processing dependencies are missing on the server. "
+            "Please contact support and try again later."
+        )
+    if error_code == ExtractionErrorCode.TEXT_BELOW_THRESHOLD:
+        if file_type == "pdf":
+            return (
+                "Some text was detected, but not enough reliable content was extracted from the PDF. "
+                "Try a clearer or text-selectable PDF."
+            )
+        return (
+            "The uploaded image contains too little readable text. "
+            "Try a clearer image with higher contrast."
+        )
+    if error_code == ExtractionErrorCode.NO_TEXT_FOUND:
+        if file_type == "pdf":
+            return (
+                "No readable text was found in the PDF after parser and OCR processing. "
+                "Try a clearer scan or a text-selectable PDF."
+            )
+        return "No readable text was found in the image. Try a clearer photo."
+    if error_code == ExtractionErrorCode.UNSUPPORTED_TYPE:
+        return "Unsupported file type for extraction."
+    if error_code == ExtractionErrorCode.PARSER_FAILED:
+        return (
+            "Could not parse text from the PDF. OCR fallback was attempted but did not produce usable text."
+        )
+    if error_code == ExtractionErrorCode.OCR_FAILED:
+        return "OCR processing failed for this file. Please try another file."
+    return "Could not extract readable text from this file."
+
+
+def _state_from_extraction(result: ExtractionResult) -> tuple[str, str | None]:
+    if not result.success:
+        return "failure", None
+    if result.truncated:
+        note = (
+            f"Processed {result.pages_processed} of {result.total_pages} pages "
+            f"(page limit: {settings.pdf_max_pages})."
+        )
+        return "partial", note
+    return "success", None
+
+
+def _parse_explanation_for_state(upload: Upload) -> tuple[str, str | None]:
+    explanation = (upload.explanation or "").strip()
+    extracted = (upload.extracted_text or "").strip()
+
+    if explanation.startswith("Processing note:"):
+        first_line = explanation.splitlines()[0]
+        return "partial", first_line.replace("Processing note:", "").strip() or None
+    if not extracted:
+        return "failure", explanation or "No readable text was extracted."
+    return "success", None
+
+
+def _extract_note_prefix(explanation: str) -> tuple[str | None, str]:
+    if not explanation.startswith("Processing note:"):
+        return None, explanation
+    parts = explanation.split("\n\n", 1)
+    note = parts[0].replace("Processing note:", "").strip()
+    body = parts[1] if len(parts) == 2 else ""
+    return note or None, body
 
 
 def _get_owned_upload(db: Session, upload_id: int, user_id: int) -> Upload:
@@ -76,21 +149,65 @@ def upload_file(
         explanation="",
     )
 
-    try:
-        record.extracted_text = extract_text_from_file(saved_path)
-    except RuntimeError:
-        # Upload still succeeds, and extracted text remains empty when OCR fails.
-        record.extracted_text = ""
+    extraction = extract_text_from_file(
+        saved_path,
+        min_text_length=settings.min_text_length,
+        max_pdf_pages=settings.pdf_max_pages,
+    )
+    state, state_note = _state_from_extraction(extraction)
+    logger.info(
+        (
+            "upload_extraction file=%s user_id=%d type=%s state=%s method=%s "
+            "pages_processed=%d total_pages=%d truncated=%s text_len=%d error=%s"
+        ),
+        Path(saved_path).name,
+        current_user.id,
+        file_type,
+        state,
+        extraction.method,
+        extraction.pages_processed,
+        extraction.total_pages,
+        extraction.truncated,
+        len(extraction.text),
+        extraction.error,
+    )
 
-    record.explanation = generate_explanation(record.extracted_text)
+    if extraction.success:
+        record.extracted_text = extraction.text
+        ai_explanation = generate_explanation(record.extracted_text)
+
+        if ai_explanation:
+            if state == "partial" and state_note:
+                record.explanation = f"Processing note: {state_note}\n\n{ai_explanation}"
+            else:
+                record.explanation = ai_explanation
+        else:
+            fallback_message = "Text extracted, but AI explanation is currently unavailable."
+            if state == "partial" and state_note:
+                record.explanation = f"Processing note: {state_note}\n\n{fallback_message}"
+            else:
+                record.explanation = fallback_message
+    else:
+        record.extracted_text = ""
+        record.explanation = _message_for_extraction_error(extraction.error, file_type)
 
     db.add(record)
     db.commit()
     db.refresh(record)
 
+    response_note, _ = _extract_note_prefix(record.explanation)
+    if state == "failure":
+        response_note = record.explanation
+
     return UploadCreateResponse(
         upload_id=record.id,
         file_type=record.file_type,
+        processing_state=state,
+        processing_note=response_note,
+        extraction_method=extraction.method,
+        pages_processed=extraction.pages_processed,
+        total_pages=extraction.total_pages,
+        truncated=extraction.truncated,
         created_at=record.created_at,
     )
 
@@ -106,17 +223,27 @@ def list_uploads(
         .order_by(Upload.id.desc())
         .all()
     )
-    return [
-        UploadRead(
-            id=row.id,
-            file_path=row.file_path,
-            file_type=row.file_type,
-            extracted_text=row.extracted_text,
-            explanation=row.explanation,
-            created_at=row.created_at,
+    response_rows: list[UploadRead] = []
+    for row in records:
+        state, note = _parse_explanation_for_state(row)
+        _, explanation_body = _extract_note_prefix(row.explanation or "")
+        response_rows.append(
+            UploadRead(
+                id=row.id,
+                file_path=row.file_path,
+                file_type=row.file_type,
+                extracted_text=row.extracted_text,
+                explanation=explanation_body,
+                processing_state=state,
+                processing_note=note,
+                extraction_method=None,
+                pages_processed=None,
+                total_pages=None,
+                truncated=(state == "partial"),
+                created_at=row.created_at,
+            )
         )
-        for row in records
-    ]
+    return response_rows
 
 
 @router.get("/{upload_id}/followups", response_model=FollowUpHistoryResponse)

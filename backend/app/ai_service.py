@@ -71,6 +71,14 @@ def generate_explanation(text: str) -> str:
         logger.info("AI explanation skipped: input text is empty")
         return ""
 
+    if len(cleaned_text) < settings.min_text_length:
+        logger.info(
+            "AI explanation skipped: input below threshold (chars=%d threshold=%d)",
+            len(cleaned_text),
+            settings.min_text_length,
+        )
+        return ""
+
     try:
         explanation = _generate_with_fallback(
             content=cleaned_text, system_prompt=SYSTEM_PROMPT)

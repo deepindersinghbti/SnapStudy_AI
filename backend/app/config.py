@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./snapstudy.db"
     upload_dir: str = "uploads"
     max_upload_size_mb: int = 20
+    pdf_max_pages: int = 20
+    min_text_length: int = 50
+    tesseract_cmd: str = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
     gemini_api_key: str = ""
     ai_model: str = "gemini-flash-latest"
 

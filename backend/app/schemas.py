@@ -36,12 +36,24 @@ class UploadRead(BaseModel):
     file_type: str
     extracted_text: str | None = None
     explanation: str | None = None
+    processing_state: str = "success"
+    processing_note: str | None = None
+    extraction_method: str | None = None
+    pages_processed: int | None = None
+    total_pages: int | None = None
+    truncated: bool = False
     created_at: datetime
 
 
 class UploadCreateResponse(BaseModel):
     upload_id: int
     file_type: str
+    processing_state: str = "success"
+    processing_note: str | None = None
+    extraction_method: str | None = None
+    pages_processed: int | None = None
+    total_pages: int | None = None
+    truncated: bool = False
     created_at: datetime
 
 

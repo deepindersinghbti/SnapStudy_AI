@@ -28,6 +28,9 @@
                 <label>Select image/PDF
                     <input type="file" id="upload-file" accept="image/*,.pdf,application/pdf" required>
                 </label>
+                <p class="inline-note">
+                    PDFs are processed parser-first, then OCR fallback if needed. Up to 20 pages are analyzed per upload.
+                </p>
                 <button type="submit" id="upload-btn">Upload and Process</button>
             </form>
             <div class="actions">

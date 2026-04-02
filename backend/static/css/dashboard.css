@@ -91,6 +91,55 @@
     color: var(--accent);
 }
 
+.upload-state {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+
+.upload-state.success {
+    color: var(--ok);
+    border-color: rgba(129, 201, 149, 0.3);
+    background: rgba(129, 201, 149, 0.12);
+}
+
+.upload-state.partial {
+    color: #f6cf86;
+    border-color: rgba(246, 207, 134, 0.35);
+    background: rgba(246, 207, 134, 0.12);
+}
+
+.upload-state.failure {
+    color: var(--error);
+    border-color: rgba(242, 139, 130, 0.35);
+    background: rgba(242, 139, 130, 0.12);
+}
+
+.processing-note {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.state-partial .processing-note {
+    border-color: rgba(246, 207, 134, 0.3);
+    background: rgba(246, 207, 134, 0.08);
+}
+
+.state-failure .processing-note {
+    border-color: rgba(242, 139, 130, 0.35);
+    background: rgba(242, 139, 130, 0.08);
+    color: #ffc9c3;
+}
+
 /* ── AI Output Block (Editor Panel Style) ── */
 .upload-block {
     margin: 12px 0 0;

@@ -20,6 +20,30 @@ const logoutBtn = document.getElementById("logout-btn");
 const uploadsList = document.getElementById("uploads-list");
 const statusLog = document.getElementById("status-log");
 
+function resolveProcessingState(row) {
+    return row.processing_state || (row.extracted_text ? "success" : "failure");
+}
+
+function stateBadgeLabel(state) {
+    if (state === "partial") {
+        return "Partial";
+    }
+    if (state === "failure") {
+        return "Failed";
+    }
+    return "Success";
+}
+
+function stateToastKind(state) {
+    if (state === "failure") {
+        return "error";
+    }
+    if (state === "partial") {
+        return "info";
+    }
+    return "success";
+}
+
 function createFollowupMessageNode(message) {
     const wrapper = document.createElement("article");
     wrapper.className = "followup-message";
@@ -91,11 +115,14 @@ async function loadUploads() {
         return;
     }
 
-    for (const row of data) {
+        for (const row of data) {
+                const processingState = resolveProcessingState(row);
+                const processingNote = row.processing_note || "";
         const item = document.createElement("article");
-        item.className = "upload-item";
+                item.className = `upload-item state-${processingState}`;
         item.innerHTML = `
-      <p class="upload-meta"><strong>ID:</strong> ${row.id} | <strong>Type:</strong> ${row.file_type} | <strong>Created:</strong> ${formatTimestamp(row.created_at)}</p>
+            <p class="upload-meta"><strong>ID:</strong> ${row.id} | <strong>Type:</strong> ${row.file_type} | <strong>Created:</strong> ${formatTimestamp(row.created_at)} | <strong>Status:</strong> <span class="upload-state ${processingState}">${stateBadgeLabel(processingState)}</span></p>
+            ${processingNote ? `<p class="processing-note">${processingNote}</p>` : ""}
       <p class="upload-block"><strong>Extracted Text</strong><br>${markdownToHtml(row.extracted_text || "(empty)")}</p>
       <p class="upload-block"><strong>Explanation</strong><br>${markdownToHtml(row.explanation || "(empty)")}</p>
       <div class="followup-wrap">
@@ -191,18 +218,27 @@ uploadForm.addEventListener("submit", async (event) => {
         return;
     }
 
-    setLoading(uploadBtn, "Uploading...", true);
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    setLoading(uploadBtn, isPdf ? "Processing PDF pages..." : "Uploading...", true);
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-        await requestAuthJson("/uploads", {
+        const result = await requestAuthJson("/uploads", {
             method: "POST",
             body: formData,
         });
         fileInput.value = "";
-        showToast("Upload complete", "success");
-        log(statusLog, "Upload successful. Refreshing upload list...");
+        const state = result.processing_state || "success";
+        const note = result.processing_note || "";
+        const message =
+            state === "failure"
+                ? `Upload complete, but extraction failed. ${note}`
+                : state === "partial"
+                    ? `Upload complete with limits applied. ${note}`
+                    : "Upload complete and processed successfully.";
+        showToast(message, stateToastKind(state));
+        log(statusLog, `Upload finished with state=${state}. ${note}`.trim());
         await loadUploads();
     } catch (error) {
         if (error.status === 401) {
