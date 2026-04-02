@@ -115,11 +115,11 @@ async function loadUploads() {
         return;
     }
 
-        for (const row of data) {
-                const processingState = resolveProcessingState(row);
-                const processingNote = row.processing_note || "";
+    for (const row of data) {
+        const processingState = resolveProcessingState(row);
+        const processingNote = row.processing_note || "";
         const item = document.createElement("article");
-                item.className = `upload-item state-${processingState}`;
+        item.className = `upload-item state-${processingState}`;
         item.innerHTML = `
             <p class="upload-meta"><strong>ID:</strong> ${row.id} | <strong>Type:</strong> ${row.file_type} | <strong>Created:</strong> ${formatTimestamp(row.created_at)} | <strong>Status:</strong> <span class="upload-state ${processingState}">${stateBadgeLabel(processingState)}</span></p>
             ${processingNote ? `<p class="processing-note">${processingNote}</p>` : ""}

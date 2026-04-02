@@ -189,7 +189,8 @@ def upload_file(
                 record.explanation = fallback_message
     else:
         record.extracted_text = ""
-        record.explanation = _message_for_extraction_error(extraction.error, file_type)
+        record.explanation = _message_for_extraction_error(
+            extraction.error, file_type)
 
     db.add(record)
     db.commit()

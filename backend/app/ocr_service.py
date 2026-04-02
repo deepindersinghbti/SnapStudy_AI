@@ -50,7 +50,8 @@ def _configure_tesseract_cmd() -> None:
 
     if Path(configured_path).exists():
         pytesseract.pytesseract.tesseract_cmd = configured_path
-        logger.info("OCR configured with explicit tesseract path: %s", configured_path)
+        logger.info(
+            "OCR configured with explicit tesseract path: %s", configured_path)
     else:
         logger.warning(
             "Configured tesseract path does not exist, falling back to system PATH: %s",
@@ -130,7 +131,8 @@ def _ocr_pdf_text(path: Path, pages_limit: int) -> tuple[str, int, int, bool, st
                     mode = "RGB"
                 else:
                     mode = "RGBA"
-                image = Image.frombytes(mode, [pixmap.width, pixmap.height], pixmap.samples)
+                image = Image.frombytes(
+                    mode, [pixmap.width, pixmap.height], pixmap.samples)
                 page_text = pytesseract.image_to_string(image)
                 text_chunks.append(page_text)
                 logger.info(
@@ -267,7 +269,8 @@ def extract_text_from_file(
 
         if should_fallback:
             fallback_triggered = True
-            ocr_text, ocr_pages, ocr_total, ocr_truncated, ocr_error = _ocr_pdf_text(path, page_limit)
+            ocr_text, ocr_pages, ocr_total, ocr_truncated, ocr_error = _ocr_pdf_text(
+                path, page_limit)
             ocr_result = _result_from_text(
                 text=ocr_text,
                 method=ExtractionMethod.OCR,
@@ -283,7 +286,8 @@ def extract_text_from_file(
                 result = ExtractionResult(
                     success=False,
                     text="",
-                    method=ExtractionMethod.OCR if (ocr_pages or ocr_total) else ExtractionMethod.NONE,
+                    method=ExtractionMethod.OCR if (
+                        ocr_pages or ocr_total) else ExtractionMethod.NONE,
                     pages_processed=ocr_pages or parser_pages,
                     total_pages=ocr_total or parser_total,
                     truncated=ocr_truncated or parser_truncated,
